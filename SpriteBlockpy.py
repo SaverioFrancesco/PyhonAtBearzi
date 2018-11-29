@@ -1,3 +1,6 @@
+from quadtree import QuadTree, RectData
+
+
 class Ofset:
     def __init__(self, x, y):
         self.x = x
@@ -10,58 +13,40 @@ class Ofset:
         self.y = self.dy
 
 
-class AABB:
-
-    def __init__(self, b_x, b_y, s_x, s_y):
-        self.b_x, self.b_y, self.s_x, self.s_y = b_x, b_y, s_x, s_y
-
-    def inside(self, aabb):
-        nb1 = self.b_x + self.s_x < aabb.b_x or self.b_x > aabb.b_x + aabb.s_x
-        nb2 = self.b_y + self.s_y < aabb.b_y or self.b_y > aabb.b_y + aabb.s_y
-        return not (nb1 or nb2)
-
-    def draw(self, pygame, screen, fill=False):
-        """debug only"""
-        if not fill:
-            pygame.draw.polygon(screen, (0, 0, 0), [[self.b_x, self.b_y], [self.b_x, self.b_y + self.s_y],
-                                                    [self.b_x + self.s_x, self.b_y + self.s_y],
-                                                    [self.b_x + self.s_x, self.b_y]], 1)
-
-    def setPos(self, x, y):
-        self.b_x, self.b_y = x, y
-
-
-class SpriteBlock(AABB):
+class SpriteBlock:
 
     def __init__(self, pygame, imgpath):
         self.x_size = 0
         self.y_size = 0
         self.x_base = 0
         self.y_base = 0
-        self.x_coord = 0  # note, this is  redundant since we inherit from AABB b_x ...
+        self.x_coord = 0
         self.y_coord = 0
         self.ofset = None
         self.base_ofset = None
+        self.save_rect = None
 
-        super().__init__(self.x_coord, self.y_coord, self.x_size, self.y_size)
+        # super().__init__(self.x_coord, self.y_coord, self.x_size, self.y_size)
 
         self.image = pygame.image.load(imgpath).convert()
 
         color = self.image.get_at((0, 0))
 
         self.image.set_colorkey(color)
-
-        QuadTreeCollisionDetntion.obj_registred.append(self)
+        self.rec = RectData(self.x_coord, self.y_coord, self.x_size, self.y_size, (0, 0, 0, 0))
 
     def draw(self, screen):
-        print(self.ofset.x)
+        # print(self.ofset.x)
         clip_rect = (self.x_base + self.ofset.x, self.y_base + self.ofset.y, self.x_size, self.y_size)
 
         screen.blit(self.image, [self.x_coord, self.y_coord], clip_rect)
 
     def setPosition(self, x, y):
+
+        if x <= 0: return
+        if y <= 0: return
+
         self.x_coord, self.y_coord = x, y
-        super().setPos(x, y)
 
     def getSize(self):
         return self.x_size, self.y_size
@@ -73,16 +58,16 @@ class Puppet(SpriteBlock):
     PUPPET_SWIM = 2
     PUPPET_DIE = 3
 
-    def __init__(self, pygame):
+    def __init__(self, pygame, posx, posy):
 
         super().__init__(pygame, "Sprites/Old hero.png")
 
         self.x_size = 16
-        self.y_size = 16
+        self.y_size = 15
         self.x_base = 16
-        self.y_base = 15
-        self.x_coord = 16
-        self.y_coord = 16
+        self.y_base = 16
+        self.x_coord = posx
+        self.y_coord = posy
 
         self.base_ofset = Ofset(16, 17)  # into the sprite system coordinate
         self.ofset = Ofset(16, 17)  # into the sprite system coordinate
@@ -117,47 +102,33 @@ class Puppet(SpriteBlock):
 class Tile(SpriteBlock):
     SX = SY = 15
 
-    def __init__(self, pygame):
+    def __init__(self, pygame, x=0, y=0):
         super().__init__(pygame, "Sprites/psygen.png")
 
         self.base_ofset = Ofset(0, 0)  # into the sprite system coordinate
         self.ofset = Ofset(0, 0)  # into the sprite system coordinate
         self.y_size, self.x_size = Tile.SX, Tile.SY
+        self.x_coord = x
+        self.y_coord = y
 
 
-class Wall():
+class Pipe(SpriteBlock):
+    SX = SY = 15
+    TOP=0
+    MID=1
+    BOT=2
 
-    def __init__(self, pygame, base_x, base_y):
+    def __init__(self, pygame, x=0, y=0, mode=MID):
+        super().__init__(pygame, "Sprites/psygen.png")
 
-        self.tiles = []
-
-        for i in range(0, 10):
-            self.tiles.append(Tile(pygame))
-
-            self.tiles[i].setPosition(base_x, base_y + i * Tile.SY)
-
-    def draw(self, screen):
-        for t in self.tiles:
-            t.draw(screen)
-
-    def setPosition(self, x, y):
-
-        # print(self.tiles)
-        for i in range(0, len(self.tiles)):
-            (a, b) = (self.tiles[i].getSize())
-            self.tiles[i].setPosition(x, y + i * b)
+        self.base_ofset = Ofset(0, 0)  # into the sprite system coordinate
+        self.ofset = Ofset(0, 15+mode*15)  # into the sprite system coordinate
+        self.y_size, self.x_size = Tile.SX, Tile.SY
+        self.x_coord = x
+        self.y_coord = y
 
 
-class Floar():
-
-    def __init__(self, pygame, base_x, base_y):
-
-        self.tiles = []
-
-        for i in range(0, 10):
-            self.tiles.append(Tile(pygame))
-
-            self.tiles[i].setPosition(base_x + i * Tile.SX, base_y)
+class CompaundTile:
 
     def draw(self, screen):
         for t in self.tiles:
@@ -170,67 +141,40 @@ class Floar():
             (a, b) = (self.tiles[i].getSize())
             self.tiles[i].setPosition(x + i * b, y)
 
-
-class Quadrant(AABB):
-
-    def __init__(self, b_x, b_y, s_x, s_y, boxes, level_left=0):
-
-        super().__init__(b_x, b_y, s_x, s_y)
-
-        if level_left > 0:
-            q1 = []
-            q2 = []
-            q3 = []
-            q4 = []
-
-            for b in boxes:
-                if b.inside(AABB(b_x + s_x / 2, b_y + 0, s_x, s_y / 2)):
-                    q1.append(b)
-                elif b.inside(AABB(b_x + 0, b_y + 0, s_x / 2, s_y / 2)):
-                    q2.append(b)
-                elif b.inside(AABB(b_x + 0, b_y + s_y / 2, s_x / 2, s_y)):
-                    q3.append(b)
-                elif b.inside(AABB(b_x + s_x / 2, b_y + s_y / 2, s_x, s_y)):
-                    q4.append(b)
-
-            self.aabb1 = Quadrant(b_x + s_x / 2, b_y, s_x / 2, s_y / 2, q1, level_left - 1)
-
-            self.aabb2 = Quadrant(b_x, b_y, s_x / 2, s_y / 2, q2, level_left - 1)
-
-            self.aabb3 = Quadrant(b_x, b_y + s_y / 2, s_x / 2, s_y / 2, q3, level_left - 1)
-
-            self.aabb4 = Quadrant(b_x + s_x / 2, b_y + s_y / 2, s_x / 2, s_y / 2, q4, level_left - 1)
-
-        else:
-            self.boxes = boxes
-            self.aabb1 = None
-            self.aabb2 = None
-            self.aabb3 = None
-            self.aabb4 = None
-
-    def recursiveDraw(self, p, y):
-
-        if self.aabb1 != None:
-            self.aabb1.draw(p, y)
-            self.aabb1.recursiveDraw(p, y)
-        if self.aabb2 != None:
-            self.aabb2.draw(p, y)
-            self.aabb2.recursiveDraw(p, y)
-        if self.aabb3 != None:
-            self.aabb3.draw(p, y)
-            self.aabb3.recursiveDraw(p, y)
-        if self.aabb4 != None:
-            self.aabb4.draw(p, y)
-            self.aabb4.recursiveDraw(p, y)
+    def register(self):
+        for i in self.tiles:
+            CollisionDetention.register(i)
 
 
-class QuadTreeCollisionDetntion:
-    obj_registred = []
-    qadr = None
+class Wall(CompaundTile):
+
+    def __init__(self, pygame, base_x, base_y):
+        self.tiles = []
+
+        for i in range(0, 10):
+            self.tiles.append(Tile(pygame))
+            self.tiles[i].setPosition(base_x, base_y + i * Tile.SY)
+
+
+class Floar(CompaundTile):
+
+    def __init__(self, pygame, base_x, base_y):
+        self.tiles = []
+
+        for i in range(0, 10):
+            self.tiles.append(Tile(pygame))
+
+            self.tiles[i].setPosition(base_x + i * Tile.SX, base_y)
+
+
+class CollisionDetention:
+    qt = None
+
+    obj = []
 
     @classmethod
-    def buildStructure(cls, screen_x, screen_y, resolution=5):
-        cls.qadr = Quadrant(0, 0, screen_x, screen_y, cls.obj_registred, resolution)
+    def buildStructure(cls, screen_x, screen_y, resolution=8):
+        cls.qt = QuadTree(resolution, screen_x, screen_y)
 
     @classmethod
     def checkCollisions(cls, aabb):
@@ -238,8 +182,86 @@ class QuadTreeCollisionDetntion:
 
     @classmethod
     def tick(cls):
-        pass
+        cls.insertRegistred()
+
+    @classmethod
+    def moveObject(cls, o, delta_x, delta_y):
+        # find the object
+
+        find = False
+        for object in cls.obj:
+            if object == o:
+                find = True
+        if find:
+
+            # print(type(o))
+            cls.unregister(o)
+
+            selected = [rect for rect in cls.qt.querry(o.x_coord + delta_x, o.y_coord + delta_y, o.x_size, o.y_size)]
+
+            if len(selected) > 0:
+                r = RectData(o.x_coord, o.y_coord, o.x_size, o.y_size, (0, 0, 0, 0))
+                o.save_rect = r
+                cls.qt.add(r)
+
+                return False
+            else:
+                r = RectData(o.x_coord + delta_x, o.y_coord + delta_y, o.x_size, o.y_size, (0, 0, 0, 0))
+                o.setPosition(o.x_coord + delta_x, o.y_coord + delta_y)
+                o.save_rect = r
+                cls.qt.add(r)
+                return True
+
+        else:
+            return False
 
     @classmethod
     def draw(cls, p, s):
-        cls.qadr.recursiveDraw(p, s)
+        cls.qt.recursiveDraw(p, s)
+
+    @classmethod
+    def register(cls, u):
+        r = RectData(u.x_coord, u.y_coord, u.x_size, u.y_size, (0, 0, 0, 0))
+        u.save_rect = r
+        cls.obj.append(u)
+
+    @classmethod
+    def registerCompaund(cls, o):
+        o.register()
+
+    @classmethod
+    def insertRegistred(cls):
+
+        for u in cls.obj:
+            r = RectData(u.x_coord, u.y_coord, u.x_size, u.y_size, (0, 0, 0, 0))
+            u.save_rect = r
+            cls.qt.add(r)
+
+    @classmethod
+    def unregister(cls, o):
+        cls.qt.remove(o.save_rect)
+
+    @classmethod
+    def clearAll(cls):
+        cls.qt.clear()
+        for u in cls.obj:
+            del u.save_rect
+
+    @classmethod
+    def query(cls, x, y, w, h):
+        return len([rect for rect in cls.qt.querry(x, y, w, h)]) == 0
+
+    @classmethod
+    def draw(cls, pygame, display):
+
+        def draw_quadtree(surface, node):
+            for n in node.nodes:
+                draw_quadtree(surface, n)
+                pygame.draw.rect(surface, (192, 192, 192), pygame.Rect(n.x, n.y, n.w + 1, n.h + 1), 1)
+                for d in n.data:
+                    pygame.draw.rect(surface, d.data, pygame.Rect(d.x, d.y, d.w, d.h))
+            for d in node.data:
+                pygame.draw.rect(surface, d.data, pygame.Rect(d.x, d.y, d.w, d.h))
+
+        n = cls.qt.root
+        draw_quadtree(display, n)

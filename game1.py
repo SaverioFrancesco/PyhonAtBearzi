@@ -1,7 +1,7 @@
 # Import a library of functions called 'pygame'
 import pygame
 from SpriteBlockpy import *
-
+import random
 # Initialize the game engine
 pygame.init()
 
@@ -14,7 +14,7 @@ BLUE = (0, 0, 255)
 
 WHITE = (0xFF, 0xFF, 0xFF)
 
-size = (700, 500)
+size = (640, 640)
 screen = pygame.display.set_mode(size)
 
 # Loop until the user clicks the close button.
@@ -29,22 +29,53 @@ y_speed = 0
 # Current position
 x_coord = 10
 y_coord = 10
-y_coord = 10
+
 
 t, t1 = 0, 0
 time = 0
 
-pupp = Puppet(pygame)
+CollisionDetention.buildStructure(640, 640)
 
-tile = Tile(pygame)
+pupp = Puppet(pygame,2,2)
 
-wall = Wall(pygame, 0, 0)
+#tile = Tile(pygame)
 
-floar1 = Floar(pygame, 200, 100)
-floar2 = Floar(pygame, 400, 0)
+pipe= Pipe(pygame, 500,500)
 
-QuadTreeCollisionDetntion.buildStructure(size[0],size[1])
+wall = Wall(pygame, 1, 300)
 
+floar1 = Floar(pygame, 200, 200)
+
+floar2 = Floar(pygame, 100, 100)
+
+floar3 = Floar(pygame, 400, 200)
+
+floar4 = Floar(pygame, 400, 300)
+
+floar5 = Floar(pygame, 50, 300)
+
+CollisionDetention.register(pupp)
+CollisionDetention.register(pipe)
+CollisionDetention.registerCompaund(wall)
+CollisionDetention.registerCompaund(floar1)
+CollisionDetention.registerCompaund(floar2)
+CollisionDetention.registerCompaund(floar3)
+CollisionDetention.registerCompaund(floar4)
+CollisionDetention.registerCompaund(floar5)
+
+
+randomPieces=[]
+for u in range(0, 100):
+    randomPieces.append(Pipe(pygame, random.randint(1, 600),random.randint(1, 500),Pipe.BOT))
+
+for i in randomPieces:
+    CollisionDetention.register(i)
+
+
+
+CollisionDetention.insertRegistred()
+
+jump=False
 # -------- Main Program Loop -----------
 while not done:
     # --- Main event loop
@@ -67,6 +98,8 @@ while not done:
             elif event.key == pygame.K_DOWN:
                 y_speed = 3
                 pupp.setState(Puppet.PUPPET_RUN)
+            elif event.key == pygame.K_j:
+                jump=True
 
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
@@ -82,6 +115,8 @@ while not done:
             elif event.key == pygame.K_DOWN:
                 y_speed = 0
                 pupp.setState(Puppet.PUPPET_STAND)
+            elif event.key == pygame.K_j:
+                jump=False
 
     # --- Game logic should go here
 
@@ -93,21 +128,37 @@ while not done:
     x_coord += x_speed
     y_coord += y_speed
 
-    # screen.blit(background, [0,0])
+    CollisionDetention.moveObject(pupp,x_speed,0)
+    CollisionDetention.moveObject(pupp,0,y_speed)
 
-    pupp.setPosition(x_coord, y_coord)
-    pupp.tick()
+
+    if not jump:
+        CollisionDetention.moveObject(pupp, 0, 0.981 / 2)
+        CollisionDetention.moveObject(pupp, 0, 0.981 / 2)
+    else:
+        CollisionDetention.moveObject(pupp, 0, 0.981 / 4)
+        CollisionDetention.moveObject(pupp, 0, 0.981 / 4)
+
+    pupp.tick()#animation
     pupp.draw(screen)
 
-    tile.setPosition(200, 100)
-    tile.draw(screen)
+    
+    #tile.setPosition(200, 100)
+    #tile.draw(screen)
 
-    wall.setPosition(300, 100)
+
     wall.draw(screen)
     floar1.draw(screen)
     floar2.draw(screen)
+    floar3.draw(screen)
+    floar4.draw(screen)
+    floar5.draw(screen)
+    pipe.draw(screen)
 
-    QuadTreeCollisionDetntion.draw(pygame,screen)
+    for i in randomPieces:
+        i.draw(screen)
+
+   # CollisionDetention.draw(pygame, screen)
 
     # --- Go ahead and update the screen with what we've drawn.
     pygame.display.flip()
