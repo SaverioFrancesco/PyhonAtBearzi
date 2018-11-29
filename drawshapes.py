@@ -26,6 +26,15 @@ done = False
 # Used to manage how fast the screen updates
 clock = pygame.time.Clock()
 time=0
+# Speed in pixels per frame
+x_speed = 0
+y_speed = 0
+
+# Current position
+x_coord = 10
+y_coord = 10
+y_coord = 10
+
 
 # -------- Main Program Loop -----------
 while not done:
@@ -33,6 +42,28 @@ while not done:
     for event in pygame.event.get():  # User did something
         if event.type == pygame.QUIT:  # If user clicked close
             done = True  # Flag that we are done so we exit this loop
+
+        # User pressed down on a key
+        elif event.type == pygame.KEYDOWN:
+            # Figure out if it was an arrow key. If so
+            # adjust speed.
+            if event.key == pygame.K_LEFT:
+                x_speed = -3
+            elif event.key == pygame.K_RIGHT:
+                x_speed = 3
+            elif event.key == pygame.K_UP:
+                y_speed = -3
+            elif event.key == pygame.K_DOWN:
+                y_speed = 3
+
+        # User let up on a key
+        elif event.type == pygame.KEYUP:
+            # If it is an arrow key, reset vector back to zero
+            if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                x_speed = 0
+            elif event.key == pygame.K_UP or event.key == pygame.K_DOWN:
+                y_speed = 0
+                y_speed = 0
 
     # --- Game logic should go here
 

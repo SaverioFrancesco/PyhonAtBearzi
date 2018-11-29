@@ -33,7 +33,6 @@ while not done:
     # --- Game logic should go here
 
     # --- Drawing code should go here
-
     # First, clear the screen to white. Don't put other drawing commands
     # above this, or they will be erased with this command.
     screen.fill(WHITE)

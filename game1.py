@@ -1,19 +1,16 @@
-
-
 # Import a library of functions called 'pygame'
 import pygame
 from SpriteBlockpy import *
-
 
 # Initialize the game engine
 pygame.init()
 
 # Define some colors
-BLACK    = (   0,   0,   0)
-WHITE    = ( 255, 255, 255)
-GREEN    = (   0, 255,   0)
-RED      = ( 255,   0,   0)
-BLUE     = (   0,   0, 255)
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
 
 WHITE = (0xFF, 0xFF, 0xFF)
 
@@ -26,7 +23,6 @@ done = False
 # Used to manage how fast the screen updates
 clock = pygame.time.Clock()
 
-
 x_speed = 0
 y_speed = 0
 
@@ -35,19 +31,19 @@ x_coord = 10
 y_coord = 10
 y_coord = 10
 
-
-t, t1 = 0 ,0
-time=0
+t, t1 = 0, 0
+time = 0
 
 pupp = Puppet(pygame)
 
 tile = Tile(pygame)
 
-wall = Wall(pygame,0,0)
+wall = Wall(pygame, 0, 0)
 
-floar1 = Floar(pygame,200,100)
-floar2 = Floar(pygame,400,0)
+floar1 = Floar(pygame, 200, 100)
+floar2 = Floar(pygame, 400, 0)
 
+QuadTreeCollisionDetntion.buildStructure(size[0],size[1])
 
 # -------- Main Program Loop -----------
 while not done:
@@ -87,7 +83,6 @@ while not done:
                 y_speed = 0
                 pupp.setState(Puppet.PUPPET_STAND)
 
-
     # --- Game logic should go here
 
     # --- Drawing code should go here
@@ -95,26 +90,28 @@ while not done:
     # above this, or they will be erased with this command.
     screen.fill(WHITE)
 
-    x_coord+=x_speed
+    x_coord += x_speed
     y_coord += y_speed
 
-    #screen.blit(background, [0,0])
+    # screen.blit(background, [0,0])
 
-    pupp.setPosition(x_coord,y_coord)
+    pupp.setPosition(x_coord, y_coord)
     pupp.tick()
     pupp.draw(screen)
 
-    tile.setPosition(200,100)
+    tile.setPosition(200, 100)
     tile.draw(screen)
 
-    wall.setPosition(300,100)
+    wall.setPosition(300, 100)
     wall.draw(screen)
     floar1.draw(screen)
     floar2.draw(screen)
+
+    QuadTreeCollisionDetntion.draw(pygame,screen)
 
     # --- Go ahead and update the screen with what we've drawn.
     pygame.display.flip()
 
     # --- Limit to 60 frames per second
-    time+=1
+    time += 1
     clock.tick(60)
