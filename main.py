@@ -248,3 +248,16 @@ if num >= 0:
         print("Positive number")
 else:
     print("Negative number")
+
+
+
+def factorial(n):
+        r=1
+        for i in range(1,n):
+            r*=i
+        return r
+
+def fact(n):
+    """factorial of n"""
+    return n>0 if  n* fact(n-1) else 1
+
